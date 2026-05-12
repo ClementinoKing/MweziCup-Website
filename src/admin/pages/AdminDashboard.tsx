@@ -1,21 +1,13 @@
-import { ArrowRight, BookOpenText, Boxes, CheckCircle2, ImagePlus, LayoutDashboard, Mail, Plus, Sparkles, Users2 } from 'lucide-react';
+import { ArrowRight, BookOpenText, Boxes, CheckCircle2, ImagePlus, LayoutDashboard, Mail, Plus, Sparkles, Users2, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import PageHeader from '../components/PageHeader';
 import StatCard from '../components/StatCard';
-import { mockActivityItems, mockBlogPosts, mockContactMessages, mockMediaItems, mockSubscribers, mockWebsiteSections } from '../data/mockAdminData';
-import type { ActivityItem } from '../types/admin';
-
-const recentItems: ActivityItem[] = mockActivityItems;
-
-const contentHealthItems = [
-  { label: 'Homepage content complete', value: 92, detail: 'Most homepage sections are ready for publishing.' },
-  { label: 'Blog editorial pipeline', value: 68, detail: 'Drafts are present, but editorial review is still needed.' },
-  { label: 'Messages awaiting reply', value: 82, detail: 'Only one new message is awaiting a response.' },
-  { label: 'Media library readiness', value: 96, detail: 'Core brand assets are uploaded and available.' },
-] as const;
+import { supabase } from '@/lib/supabase';
+import type { BlogPost } from '@/types/database';
 
 const quickActions = [
   {
@@ -44,73 +36,107 @@ const quickActions = [
   },
 ];
 
-function getActivityDot(kind: ActivityItem['kind']) {
-  switch (kind) {
-    case 'publish':
-      return 'bg-emerald-500';
-    case 'draft':
-      return 'bg-amber-500';
-    case 'message':
-      return 'bg-blue-500';
-    case 'media':
-      return 'bg-fuchsia-500';
-    case 'user':
-      return 'bg-mwezi-primary';
-    default:
-      return 'bg-slate-500';
-  }
-}
-
 export default function AdminDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [contactMessages, setContactMessages] = useState<any[]>([]);
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [mediaItems, setMediaItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      // Fetch blog posts
+      const { data: posts } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      // Fetch contact messages
+      const { data: messages } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .is('deleted_at', null)
+        .order('received_at', { ascending: false });
+
+      // Fetch newsletter subscribers
+      const { data: subs } = await supabase
+        .from('newsletter_subscribers')
+        .select('*')
+        .is('deleted_at', null)
+        .order('subscription_date', { ascending: false });
+
+      // Fetch media items
+      const { data: media } = await supabase
+        .from('media_items')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      setBlogPosts(posts || []);
+      setContactMessages(messages || []);
+      setSubscribers(subs || []);
+      setMediaItems(media || []);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const publishedPosts = blogPosts.filter((post) => post.status === 'published');
+  const draftPosts = blogPosts.filter((post) => post.status === 'draft');
+  const newMessages = contactMessages.filter((msg) => msg.status === 'new');
+
   const stats = [
-    { label: 'Total blog posts', value: String(mockBlogPosts.length), icon: BookOpenText, change: '+2 this week' },
-    { label: 'Published posts', value: String(mockBlogPosts.filter((post) => post.status === 'Published').length), icon: LayoutDashboard, change: 'Stable' },
-    { label: 'Draft posts', value: String(mockBlogPosts.filter((post) => post.status === 'Draft').length), icon: Sparkles, change: '+1 today' },
-    { label: 'Homepage sections', value: '5', icon: Boxes, change: 'Ready' },
-    { label: 'Product sections', value: String(mockWebsiteSections.filter((section) => section.type === 'Product').length), icon: Boxes, change: 'Linked' },
-    { label: 'Contact messages', value: String(mockContactMessages.length), icon: Mail, change: '+1 new' },
-    { label: 'Newsletter subscribers', value: String(mockSubscribers.length), icon: Users2, change: '+4 today' },
-    { label: 'Recent updates', value: String(mockActivityItems.length), icon: Sparkles, change: '8 total' },
+    { label: 'Total blog posts', value: String(blogPosts.length), icon: BookOpenText, change: `${blogPosts.length} total` },
+    { label: 'Published posts', value: String(publishedPosts.length), icon: LayoutDashboard, change: 'Live' },
+    { label: 'Draft posts', value: String(draftPosts.length), icon: Sparkles, change: 'In progress' },
+    { label: 'Contact messages', value: String(contactMessages.length), icon: Mail, change: `${newMessages.length} new` },
+    { label: 'Newsletter subscribers', value: String(subscribers.length), icon: Users2, change: 'Active' },
+    { label: 'Media assets', value: String(mediaItems.length), icon: ImagePlus, change: 'Uploaded' },
   ];
+
+  const contentHealthItems = [
+    { 
+      label: 'Blog posts published', 
+      value: blogPosts.length > 0 ? Math.round((publishedPosts.length / blogPosts.length) * 100) : 0, 
+      detail: `${publishedPosts.length} of ${blogPosts.length} posts are published.` 
+    },
+    { 
+      label: 'Messages awaiting reply', 
+      value: contactMessages.length > 0 ? Math.round(((contactMessages.length - newMessages.length) / contactMessages.length) * 100) : 100, 
+      detail: `${newMessages.length} message${newMessages.length !== 1 ? 's' : ''} awaiting response.` 
+    },
+    { 
+      label: 'Media library readiness', 
+      value: mediaItems.length > 0 ? 96 : 0, 
+      detail: `${mediaItems.length} assets uploaded and available.` 
+    },
+  ] as const;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      <Card className="border-border shadow-sm">
-        <CardContent className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Overview</p>
-            <div className="space-y-1">
-              <h2 className="text-2xl font-semibold tracking-tight text-foreground">Admin dashboard</h2>
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                Keep homepage content, blog publishing, media, messages, and team access aligned from one central workspace.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button asChild variant="outline" className="rounded-lg">
-              <Link to="/admin/blog">
-                <ArrowRight className="h-4 w-4 rotate-180" />
-                Open blog
-              </Link>
-            </Button>
-            <Button asChild className="rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90">
-              <Link to="/admin/blog/new">
-                <Plus className="h-4 w-4" />
-                New post
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       <PageHeader
         eyebrow="Summary"
         title="Today at a glance"
         description="Track the health of the admin content system without digging through individual sections."
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {stats.map((stat) => (
           <StatCard key={stat.label} label={stat.label} value={stat.value} icon={stat.icon} change={stat.change} />
         ))}
@@ -119,25 +145,44 @@ export default function AdminDashboard() {
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="border-border shadow-sm">
           <CardHeader>
-            <CardTitle>Recent activity</CardTitle>
-            <CardDescription>The latest content, message, and admin updates in one feed.</CardDescription>
+            <CardTitle>Recent blog posts</CardTitle>
+            <CardDescription>The latest blog posts created in the system.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentItems.map((item, index) => (
-              <div key={item.id}>
-                <div className="flex gap-4 py-1">
-                  <div className={`mt-2 h-2.5 w-2.5 rounded-full ${getActivityDot(item.kind)}`} />
-                  <div className="flex-1 space-y-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="font-medium text-foreground">{item.title}</h3>
-                      <span className="text-xs text-muted-foreground">{item.time}</span>
+            {blogPosts.slice(0, 5).length > 0 ? (
+              blogPosts.slice(0, 5).map((post, index) => (
+                <div key={post.id}>
+                  <div className="flex gap-4 py-1">
+                    <div className={`mt-2 h-2.5 w-2.5 rounded-full ${
+                      post.status === 'published' ? 'bg-emerald-500' : 
+                      post.status === 'draft' ? 'bg-amber-500' : 'bg-slate-500'
+                    }`} />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="font-medium text-foreground">{post.title}</h3>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(post.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm leading-6 text-muted-foreground line-clamp-2">{post.excerpt}</p>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          post.status === 'published' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                          post.status === 'draft' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                          'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400'
+                        }`}>
+                          {post.status}
+                        </span>
+                        <span className="text-xs text-muted-foreground">by {post.author_name}</span>
+                      </div>
                     </div>
-                    <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
                   </div>
+                  {index !== Math.min(blogPosts.length, 5) - 1 ? <Separator className="my-4" /> : null}
                 </div>
-                {index !== recentItems.length - 1 ? <Separator className="my-4" /> : null}
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground py-8 text-center">No blog posts yet. Create your first post!</p>
+            )}
           </CardContent>
         </Card>
 
@@ -206,25 +251,27 @@ export default function AdminDashboard() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-border p-4">
               <p className="text-sm font-medium text-muted-foreground">Blog posts</p>
-              <p className="mt-2 text-3xl font-semibold text-foreground">{mockBlogPosts.length}</p>
+              <p className="mt-2 text-3xl font-semibold text-foreground">{blogPosts.length}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {mockBlogPosts.filter((post) => post.status === 'Published').length} published and ready.
+                {publishedPosts.length} published and ready.
               </p>
             </div>
             <div className="rounded-lg border border-border p-4">
               <p className="text-sm font-medium text-muted-foreground">Messages</p>
-              <p className="mt-2 text-3xl font-semibold text-foreground">{mockContactMessages.length}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Prioritize new inquiries and support follow-ups.</p>
+              <p className="mt-2 text-3xl font-semibold text-foreground">{contactMessages.length}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {newMessages.length} new message{newMessages.length !== 1 ? 's' : ''} to review.
+              </p>
             </div>
             <div className="rounded-lg border border-border p-4">
               <p className="text-sm font-medium text-muted-foreground">Subscribers</p>
-              <p className="mt-2 text-3xl font-semibold text-foreground">{mockSubscribers.length}</p>
+              <p className="mt-2 text-3xl font-semibold text-foreground">{subscribers.length}</p>
               <p className="mt-2 text-sm text-muted-foreground">Keep the newsletter list clean and active.</p>
             </div>
             <div className="rounded-lg border border-border p-4">
               <p className="text-sm font-medium text-muted-foreground">Media assets</p>
-              <p className="mt-2 text-3xl font-semibold text-foreground">{mockMediaItems.length}</p>
-              <p className="mt-2 text-sm text-muted-foreground">Core brand assets are organized and ready.</p>
+              <p className="mt-2 text-3xl font-semibold text-foreground">{mediaItems.length}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Brand assets organized and ready.</p>
             </div>
           </CardContent>
         </Card>
@@ -236,24 +283,42 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3 rounded-lg border border-border p-4">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <CheckCircle2 className={`h-5 w-5 ${publishedPosts.length > 0 ? 'text-emerald-600' : 'text-amber-600'}`} />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Homepage is mostly complete</p>
-                <p className="text-sm text-muted-foreground">Finalize CTA wording and the hero image selection.</p>
+                <p className="text-sm font-medium text-foreground">
+                  {publishedPosts.length > 0 ? 'Blog posts published' : 'No published posts yet'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {publishedPosts.length > 0 
+                    ? `${publishedPosts.length} post${publishedPosts.length !== 1 ? 's' : ''} live on the website.`
+                    : 'Create and publish your first blog post.'}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-lg border border-border p-4">
-              <CheckCircle2 className="h-5 w-5 text-amber-600" />
+              <CheckCircle2 className={`h-5 w-5 ${draftPosts.length === 0 ? 'text-emerald-600' : 'text-amber-600'}`} />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Blog drafts need review</p>
-                <p className="text-sm text-muted-foreground">Focus on publishing the education and care articles.</p>
+                <p className="text-sm font-medium text-foreground">
+                  {draftPosts.length > 0 ? 'Blog drafts need review' : 'No drafts pending'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {draftPosts.length > 0
+                    ? `${draftPosts.length} draft${draftPosts.length !== 1 ? 's' : ''} waiting to be published.`
+                    : 'All posts are either published or archived.'}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-lg border border-border p-4">
-              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+              <CheckCircle2 className={`h-5 w-5 ${newMessages.length === 0 ? 'text-emerald-600' : 'text-blue-600'}`} />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Inbox requires response</p>
-                <p className="text-sm text-muted-foreground">One wholesale message is waiting in the queue.</p>
+                <p className="text-sm font-medium text-foreground">
+                  {newMessages.length > 0 ? 'Messages require response' : 'Inbox up to date'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {newMessages.length > 0
+                    ? `${newMessages.length} message${newMessages.length !== 1 ? 's' : ''} waiting in the queue.`
+                    : 'All messages have been reviewed.'}
+                </p>
               </div>
             </div>
           </CardContent>

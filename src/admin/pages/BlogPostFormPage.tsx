@@ -180,13 +180,13 @@ export default function BlogPostFormPage() {
 
         // Publish if requested
         if (shouldPublish && data) {
-          const { error: publishError } = await publishBlogPost(data.id);
+          const { error: publishError } = await publishBlogPost((data as any).id);
           if (publishError) throw publishError;
         }
 
         // Navigate to edit page for the new post
         if (data) {
-          navigate(`/admin/blog/${data.id}/edit`, { replace: true });
+          navigate(`/admin/blog/${(data as any).id}/edit`, { replace: true });
         }
       }
 

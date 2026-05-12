@@ -1,7 +1,13 @@
-import { Bell, ChevronDown, Menu, PanelLeftClose, PanelLeftOpen, Search, UserRound } from 'lucide-react';
+import { Bell, ChevronDown, Menu, PanelLeftClose, PanelLeftOpen, Search, UserRound, CirclePlus, FileText, Package, Megaphone, UserPlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -47,7 +53,7 @@ export default function AdminHeader({
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
       <div className="flex h-[72px] items-center gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-6 shrink-0">
           <Button variant="outline" size="icon" className="h-10 w-10 rounded-lg lg:hidden" onClick={onMobileMenuToggle}>
             <Menu className="h-5 w-5" />
           </Button>
@@ -63,8 +69,44 @@ export default function AdminHeader({
           </Button>
 
           <NavLink to="/martinee" className="flex items-center gap-2">
-            <img src="/Mwezi_Cup_logo.svg" alt="Mwezi Cup" className="h-9 w-auto object-contain" />
+            <img src="/Mwezi_Cup_logo.svg" alt="Mwezi Cup" className="h-8 w-auto object-contain" />
           </NavLink>
+
+          {/* Create Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" className="hidden rounded-full gap-2 md:inline-flex">
+                <CirclePlus className="h-4 w-4" />
+                Create
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link to="/admin/blog/new" className="flex items-center gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4" />
+                  <span>Blog Post</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/products/new" className="flex items-center gap-2 cursor-pointer">
+                  <Package className="h-4 w-4" />
+                  <span>Product</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/campaigns/new" className="flex items-center gap-2 cursor-pointer">
+                  <Megaphone className="h-4 w-4" />
+                  <span>Campaign</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/users/invite" className="flex items-center gap-2 cursor-pointer">
+                  <UserPlus className="h-4 w-4" />
+                  <span>Invite User</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="hidden flex-1 md:flex md:justify-center">

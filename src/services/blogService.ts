@@ -100,10 +100,11 @@ export async function getBlogPostById(id: string) {
       .single();
 
     if (error) throw error;
+    if (!data) return { data: null, error: new Error('Post not found') };
 
     const post: BlogPostWithTags = {
-      ...data,
-      tags: (data.blog_post_tags || [])
+      ...(data as any),
+      tags: ((data as any).blog_post_tags || [])
         .sort((a: any, b: any) => a.sort_order - b.sort_order)
         .map((t: any) => t.tag),
     };
@@ -129,10 +130,11 @@ export async function getBlogPostBySlug(slug: string) {
       .single();
 
     if (error) throw error;
+    if (!data) return { data: null, error: new Error('Post not found') };
 
     const post: BlogPostWithTags = {
-      ...data,
-      tags: (data.blog_post_tags || [])
+      ...(data as any),
+      tags: ((data as any).blog_post_tags || [])
         .sort((a: any, b: any) => a.sort_order - b.sort_order)
         .map((t: any) => t.tag),
     };
@@ -162,28 +164,31 @@ export async function createBlogPost(
     }
 
     // Insert blog post
+    const insertData: any = [{
+      ...post,
+      author_id: user.id,
+      created_by: user.id,
+      updated_by: user.id,
+    }];
+    
     const { data: newPost, error: postError } = await supabase
       .from('blog_posts')
-      .insert({
-        ...post,
-        author_id: user.id,
-        created_by: user.id,
-        updated_by: user.id,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (postError) throw postError;
+    if (!newPost) throw new Error('Failed to create post');
 
     // Insert tags
     if (tags.length > 0) {
-      const tagInserts: BlogPostTagInsert[] = tags.map((tag, index) => ({
-        blog_post_id: newPost.id,
+      const tagInserts: any[] = tags.map((tag, index) => ({
+        blog_post_id: (newPost as any).id,
         tag: tag.trim(),
         sort_order: index + 1,
       }));
 
-      const { error: tagsError } = await supabase.from('blog_post_tags').insert(tagInserts);
+      const { error: tagsError } = await supabase.from('blog_post_tags').insert(tagInserts as any);
 
       if (tagsError) throw tagsError;
     }
@@ -214,12 +219,14 @@ export async function updateBlogPost(
     }
 
     // Update blog post
-    const { data: updatedPost, error: postError } = await supabase
+    const updateData: any = {
+      ...post,
+      updated_by: user.id,
+    };
+    
+    const { data: updatedPost, error: postError } = await (supabase as any)
       .from('blog_posts')
-      .update({
-        ...post,
-        updated_by: user.id,
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -244,7 +251,7 @@ export async function updateBlogPost(
           sort_order: index + 1,
         }));
 
-        const { error: tagsError } = await supabase.from('blog_post_tags').insert(tagInserts);
+        const { error: tagsError } = await supabase.from('blog_post_tags').insert(tagInserts as any);
 
         if (tagsError) throw tagsError;
       }
@@ -262,9 +269,11 @@ export async function updateBlogPost(
  */
 export async function deleteBlogPost(id: string) {
   try {
-    const { error } = await supabase
+    const updateData: any = { deleted_at: new Date().toISOString() };
+    
+    const { error } = await (supabase as any)
       .from('blog_posts')
-      .update({ deleted_at: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id);
 
     if (error) throw error;

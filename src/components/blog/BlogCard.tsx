@@ -32,7 +32,7 @@ export default function BlogCard({ post }: BlogCardProps) {
   return (
     <Link
       to={`/blog/${post.slug}`}
-      className="group relative flex flex-col overflow-hidden rounded-3xl bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 dark:bg-card/50"
+      className="group relative flex flex-col overflow-hidden rounded-3xl bg-card shadow-md transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 dark:bg-card/50 dark:shadow-black/30"
     >
       {/* Featured Image */}
       <div className="relative aspect-[16/10] overflow-hidden bg-muted">

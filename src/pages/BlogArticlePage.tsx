@@ -68,7 +68,7 @@ export default function BlogArticlePage() {
   if (error || !post) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="mx-auto max-w-4xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="page-shell py-20">
           <div className="rounded-3xl border border-border bg-card p-12 text-center">
             <h1 className="mb-4 text-3xl font-bold text-foreground">Article not found</h1>
             <p className="mb-8 text-muted-foreground">
@@ -91,33 +91,56 @@ export default function BlogArticlePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Back Button - Fixed */}
-      <div className="sticky top-20 z-10 border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <Button asChild variant="ghost" size="sm" className="rounded-full">
-            <Link to="/blog">
-              <ArrowLeft className="h-4 w-4" />
-              Back to blog
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Featured Image */}
-      {post.featured_image_url && (
-        <div className="relative h-[50vh] min-h-[400px] overflow-hidden bg-muted">
+      {/* Featured Image with Back Button Overlay */}
+      {post.featured_image_url ? (
+        <div className="relative h-[60vh] min-h-[500px] overflow-hidden bg-muted">
           <img
             src={post.featured_image_url}
             alt={post.title}
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          
+          {/* Glass Back Button - Aligned with Content Container */}
+          <div className="absolute inset-x-0 top-4 sm:top-6 lg:top-8">
+            <div className="page-shell">
+              <Button
+                asChild
+                size="sm"
+                className="rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition-all hover:bg-white/20 hover:border-white/30 dark:border-white/10 dark:bg-black/20 dark:hover:bg-black/30"
+              >
+                <Link to="/blog">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to blog
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
+      ) : (
+        <>
+          {/* Fallback: Back button without image */}
+          <div className="border-b border-border/50 bg-background">
+            <div className="page-shell py-6">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+              >
+                <Link to="/blog">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to blog
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Article Content */}
       <article className="relative">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="page-shell">
           <div className={post.featured_image_url ? '-mt-32 relative z-10' : 'pt-12'}>
             {/* Header */}
             <header className="mb-12">
@@ -182,19 +205,27 @@ export default function BlogArticlePage() {
 
             {/* Article Body */}
             <div
-              className="prose prose-lg max-w-none dark:prose-invert
-                prose-headings:font-bold prose-headings:tracking-tight
+              className="prose prose-xl max-w-none dark:prose-invert
+                prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground
+                prose-h1:text-4xl prose-h1:mt-12 prose-h1:mb-6
                 prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
                 prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
-                prose-p:leading-relaxed prose-p:text-foreground/90
+                prose-h4:text-xl prose-h4:mt-6 prose-h4:mb-3
+                prose-p:text-lg prose-p:leading-relaxed prose-p:text-foreground/90 prose-p:mb-6
                 prose-a:text-primary prose-a:no-underline prose-a:font-medium hover:prose-a:underline
                 prose-strong:text-foreground prose-strong:font-semibold
-                prose-img:rounded-2xl prose-img:shadow-lg
-                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/50 prose-blockquote:py-1 prose-blockquote:px-6 prose-blockquote:rounded-r-xl
-                prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm
-                prose-pre:bg-muted prose-pre:border prose-pre:border-border
-                prose-ul:list-disc prose-ol:list-decimal
-                prose-li:text-foreground/90"
+                prose-em:text-foreground/90 prose-em:italic
+                prose-img:rounded-2xl prose-img:shadow-lg prose-img:my-8
+                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-muted/50 prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-xl prose-blockquote:not-italic prose-blockquote:text-foreground/80 prose-blockquote:my-8
+                prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-base prose-code:text-foreground prose-code:font-mono
+                prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:p-4 prose-pre:rounded-xl prose-pre:my-6
+                prose-ul:list-disc prose-ul:pl-6 prose-ul:my-6 prose-ul:space-y-2
+                prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-6 prose-ol:space-y-2
+                prose-li:text-lg prose-li:text-foreground/90 prose-li:leading-relaxed prose-li:marker:text-primary
+                prose-table:my-8 prose-table:border-collapse
+                prose-th:border prose-th:border-border prose-th:bg-muted prose-th:p-3 prose-th:text-left prose-th:font-semibold
+                prose-td:border prose-td:border-border prose-td:p-3
+                prose-hr:border-border prose-hr:my-12"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
 
