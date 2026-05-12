@@ -49,7 +49,7 @@ export default function ContactMessages() {
       <Card className="border-border/80 shadow-sm">
         <CardContent className="overflow-x-auto p-0">
           <table className="min-w-full divide-y divide-border/70">
-            <thead className="bg-mwezi-cream/70 text-left text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <thead className="bg-muted/30 dark:bg-muted/20 text-left text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               <tr>
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Email</th>
@@ -59,9 +59,9 @@ export default function ContactMessages() {
                 <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/70 bg-white">
+            <tbody className="divide-y divide-border/70 bg-card dark:bg-card/50">
               {filteredMessages.map((message) => (
-                <tr key={message.id}>
+                <tr key={message.id} className="hover:bg-muted/20 dark:hover:bg-muted/10 transition-colors">
                   <td className="px-6 py-5">
                     <div>
                       <p className="font-medium text-foreground">{message.name}</p>
@@ -96,7 +96,7 @@ export default function ContactMessages() {
                         <Check className="h-4 w-4" />
                         Mark as Read
                       </Button>
-                      <Button variant="ghost" size="sm" className="rounded-full text-rose-700 hover:bg-rose-50 hover:text-rose-700" onClick={() => setDeleteTarget(message)}>
+                      <Button variant="ghost" size="sm" className="rounded-full text-rose-700 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30 dark:hover:text-rose-300" onClick={() => setDeleteTarget(message)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -118,7 +118,7 @@ export default function ContactMessages() {
       <Dialog.Root open={Boolean(selectedMessage)} onOpenChange={(open) => !open && setSelectedMessage(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-border bg-white p-6 shadow-2xl focus:outline-none">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-border bg-card dark:bg-card/95 p-6 shadow-2xl focus:outline-none">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-2">
                 <Dialog.Title className="text-xl font-semibold text-foreground">{selectedMessage?.subject}</Dialog.Title>
@@ -136,17 +136,17 @@ export default function ContactMessages() {
 
             <div className="mt-6 space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-3xl bg-mwezi-cream p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mwezi-deep">Name</p>
+                <div className="rounded-3xl bg-muted/40 dark:bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-primary/90">Name</p>
                   <p className="mt-2 text-sm text-foreground">{selectedMessage?.name}</p>
                 </div>
-                <div className="rounded-3xl bg-mwezi-cream p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mwezi-deep">Contact</p>
+                <div className="rounded-3xl bg-muted/40 dark:bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary dark:text-primary/90">Contact</p>
                   <p className="mt-2 text-sm text-foreground">{selectedMessage?.email}</p>
                   <p className="mt-1 text-sm text-muted-foreground">{selectedMessage?.phone}</p>
                 </div>
               </div>
-              <div className="rounded-3xl border border-border bg-background p-4">
+              <div className="rounded-3xl border border-border bg-background dark:bg-background/50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Message</p>
                 <p className="mt-3 text-sm leading-7 text-foreground">{selectedMessage?.message}</p>
               </div>

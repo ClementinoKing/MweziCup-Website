@@ -1,0 +1,126 @@
+/* Quill Editor Custom Styles for Dark Mode */
+
+/* Light mode toolbar */
+.ql-toolbar.ql-snow {
+  border: none !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  background: hsl(var(--muted) / 0.3) !important;
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  background: hsl(var(--background)) !important;
+}
+
+.ql-editor {
+  min-height: 400px;
+  color: hsl(var(--foreground)) !important;
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
+.ql-editor.ql-blank::before {
+  color: hsl(var(--muted-foreground)) !important;
+  font-style: normal;
+}
+
+/* Toolbar button styles */
+.ql-snow .ql-stroke {
+  stroke: hsl(var(--foreground)) !important;
+}
+
+.ql-snow .ql-fill {
+  fill: hsl(var(--foreground)) !important;
+}
+
+.ql-snow .ql-picker-label {
+  color: hsl(var(--foreground)) !important;
+}
+
+.ql-snow .ql-picker-options {
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.ql-snow .ql-picker-item {
+  color: hsl(var(--foreground)) !important;
+}
+
+.ql-snow .ql-picker-item:hover {
+  background: hsl(var(--muted)) !important;
+}
+
+/* Active/selected states */
+.ql-snow.ql-toolbar button:hover,
+.ql-snow .ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active,
+.ql-snow .ql-toolbar button.ql-active {
+  color: hsl(var(--primary)) !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow .ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.ql-snow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: hsl(var(--primary)) !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow .ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill,
+.ql-snow .ql-toolbar button.ql-active .ql-fill {
+  fill: hsl(var(--primary)) !important;
+}
+
+/* Dark mode specific adjustments */
+.dark .ql-toolbar.ql-snow {
+  background: hsl(var(--muted) / 0.2) !important;
+}
+
+.dark .ql-container.ql-snow {
+  background: hsl(var(--background)) !important;
+}
+
+.dark .ql-editor {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Tooltip styles */
+.ql-snow .ql-tooltip {
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.ql-snow .ql-tooltip input[type=text] {
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.ql-snow .ql-tooltip a {
+  color: hsl(var(--primary)) !important;
+}
+
+/* Format content in editor */
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.ql-editor a {
+  color: hsl(var(--primary)) !important;
+}
+
+.ql-editor blockquote {
+  border-left: 4px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.ql-editor code,
+.ql-editor pre {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}

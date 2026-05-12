@@ -29,21 +29,21 @@
   .dark {
     --background: 220 18% 8%;
     --foreground: 0 0% 98%;
-    --card: 220 16% 11%;
+    --card: 220 16% 12%;
     --card-foreground: 0 0% 98%;
     --popover: 220 16% 11%;
     --popover-foreground: 0 0% 98%;
-    --primary: 350 84% 57%;
+    --primary: 350 84% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 12% 16%;
+    --secondary: 220 12% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 220 12% 14%;
-    --muted-foreground: 220 8% 68%;
-    --accent: 220 10% 20%;
+    --muted: 220 12% 15%;
+    --muted-foreground: 220 8% 70%;
+    --accent: 220 10% 22%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 10% 20%;
+    --border: 220 10% 22%;
     --input: 220 10% 20%;
     --ring: 350 76% 49%;
   }
@@ -72,6 +72,14 @@
     100% {
       transform: translate3d(-50%, 0, 0);
     }
+  }
+
+  /* Grid pattern for hero sections */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 }
 

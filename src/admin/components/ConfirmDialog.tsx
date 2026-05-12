@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,7 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   onConfirm: () => void;
   danger?: boolean;
+  loading?: boolean;
 }
 
 export default function ConfirmDialog({
@@ -23,6 +24,7 @@ export default function ConfirmDialog({
   cancelLabel = 'Cancel',
   onConfirm,
   danger = true,
+  loading = false,
 }: ConfirmDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -37,23 +39,24 @@ export default function ConfirmDialog({
               <Dialog.Title className="text-lg font-semibold text-foreground">{title}</Dialog.Title>
               <Dialog.Description className="text-sm leading-6 text-muted-foreground">{description}</Dialog.Description>
             </div>
-            <Dialog.Close className="rounded-full border border-border p-2 text-muted-foreground transition hover:bg-secondary">
+            <Dialog.Close className="rounded-full border border-border p-2 text-muted-foreground transition hover:bg-secondary" disabled={loading}>
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </Dialog.Close>
           </div>
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               {cancelLabel}
             </Button>
             <Button
               onClick={() => {
                 onConfirm();
-                onOpenChange(false);
               }}
-              className={cn(danger && 'bg-mwezi-primary hover:bg-mwezi-deep')}
+              className={cn(danger && 'bg-primary hover:bg-primary/90')}
+              disabled={loading}
             >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {confirmLabel}
             </Button>
           </div>

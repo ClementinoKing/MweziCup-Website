@@ -1,220 +1,508 @@
-import { ImageUp, Save, Send, Sparkles } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Eye, FileText, Save, Send, User, Tag, Calendar, Image as ImageIcon, Loader2, ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import '../styles/quill-custom.css';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { FileUpload } from '@/components/ui/file-upload';
 import PageHeader from '../components/PageHeader';
 import StatusBadge from '../components/StatusBadge';
-import { mockBlogPosts } from '../data/mockAdminData';
-import type { BlogPost, BlogPostStatus } from '../types/admin';
+import type { UploadResult } from '@/lib/storage';
+import {
+  getBlogPostById,
+  createBlogPost,
+  updateBlogPost,
+  publishBlogPost,
+  generateSlug,
+} from '@/services/blogService';
+import type { BlogPostWithTags, BlogPostStatus } from '@/types/database';
 
 const inputClassName =
   'h-11 rounded-2xl border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-mwezi-primary/15';
 
-const emptyPost: BlogPost = {
-  id: 'new',
+type FormData = {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  featured_image_url: string;
+  author_name: string;
+  seo_title: string;
+  seo_description: string;
+  status: BlogPostStatus;
+};
+
+const emptyForm: FormData = {
   title: '',
   slug: '',
   excerpt: '',
   content: '',
   category: 'Education',
-  tags: [],
-  featuredImage: '',
-  status: 'Draft',
-  author: 'Mwezi Editorial',
-  createdAt: new Date().toISOString().slice(0, 10),
-  updatedAt: new Date().toISOString().slice(0, 10),
-  seoTitle: '',
-  seoDescription: '',
+  featured_image_url: '',
+  author_name: 'Mwezi Editorial',
+  seo_title: '',
+  seo_description: '',
+  status: 'draft',
 };
+
+// Quill editor modules configuration
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ align: [] }],
+    ['link', 'image', 'video'],
+    ['blockquote', 'code-block'],
+    [{ color: [] }, { background: [] }],
+    ['clean'],
+  ],
+};
+
+const quillFormats = [
+  'header',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'list',
+  'bullet',
+  'align',
+  'link',
+  'image',
+  'video',
+  'blockquote',
+  'code-block',
+  'color',
+  'background',
+];
 
 export default function BlogPostFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const existingPost = useMemo(() => mockBlogPosts.find((post) => post.id === id) ?? null, [id]);
-  const [post, setPost] = useState<BlogPost>(existingPost ?? emptyPost);
-  const [tagInput, setTagInput] = useState((existingPost?.tags ?? []).join(', '));
-  const [status, setStatus] = useState<BlogPostStatus>(existingPost?.status ?? 'Draft');
-  const isEditing = Boolean(existingPost);
+  const isEditing = Boolean(id && id !== 'new');
 
-  const handleSave = (nextStatus: BlogPostStatus) => {
-    setStatus(nextStatus);
-    setPost((current) => ({ ...current, status: nextStatus, tags: tagInput.split(',').map((tag) => tag.trim()).filter(Boolean) }));
+  const [loading, setLoading] = useState(isEditing);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState<FormData>(emptyForm);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [error, setError] = useState<string | null>(null);
+
+  // Load existing post if editing
+  useEffect(() => {
+    if (isEditing && id) {
+      loadPost(id);
+    }
+  }, [id, isEditing]);
+
+  const loadPost = async (postId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await getBlogPostById(postId);
+      if (error) throw error;
+      if (data) {
+        setFormData({
+          title: data.title,
+          slug: data.slug,
+          excerpt: data.excerpt,
+          content: data.content,
+          category: data.category,
+          featured_image_url: data.featured_image_url,
+          author_name: data.author_name,
+          seo_title: data.seo_title,
+          seo_description: data.seo_description,
+          status: data.status,
+        });
+        setTags(data.tags || []);
+      }
+    } catch (err) {
+      console.error('Error loading post:', err);
+      setError('Failed to load blog post');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleSave = async (shouldPublish: boolean = false) => {
+    setSaving(true);
+    setError(null);
+
+    try {
+      // Validate required fields
+      if (!formData.title.trim()) {
+        throw new Error('Title is required');
+      }
+      if (!formData.excerpt.trim()) {
+        throw new Error('Excerpt is required');
+      }
+      if (!formData.content.trim()) {
+        throw new Error('Content is required');
+      }
+      if (!formData.featured_image_url.trim()) {
+        throw new Error('Featured image is required');
+      }
+
+      // Generate slug if empty
+      const slug = formData.slug || generateSlug(formData.title);
+
+      // Auto-generate SEO fields if empty
+      const seoTitle = formData.seo_title || formData.title;
+      const seoDescription = formData.seo_description || formData.excerpt;
+
+      const postData = {
+        ...formData,
+        slug,
+        seo_title: seoTitle,
+        seo_description: seoDescription,
+      };
+
+      if (isEditing && id) {
+        // Update existing post
+        const { error } = await updateBlogPost(id, postData, tags);
+        if (error) throw error;
+
+        // Publish if requested
+        if (shouldPublish && formData.status !== 'published') {
+          const { error: publishError } = await publishBlogPost(id);
+          if (publishError) throw publishError;
+        }
+      } else {
+        // Create new post
+        const { data, error } = await createBlogPost(postData, tags);
+        if (error) throw error;
+
+        // Publish if requested
+        if (shouldPublish && data) {
+          const { error: publishError } = await publishBlogPost(data.id);
+          if (publishError) throw publishError;
+        }
+
+        // Navigate to edit page for the new post
+        if (data) {
+          navigate(`/admin/blog/${data.id}/edit`, { replace: true });
+        }
+      }
+
+      // Success - navigate back to blog list
+      navigate('/admin/blog');
+    } catch (err) {
+      console.error('Error saving post:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save blog post');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove));
+  };
+
+  // Auto-generate slug from title
+  const handleTitleChange = (title: string) => {
+    setFormData({ ...formData, title });
+    if (!isEditing) {
+      setFormData((prev) => ({ ...prev, slug: generateSlug(title) }));
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        eyebrow={isEditing ? 'Edit post' : 'Create post'}
         title={isEditing ? 'Edit Blog Post' : 'New Blog Post'}
-        description="Use text-first editing for now so the content model can later be connected to a CMS or database."
+        description="Create and manage your blog posts"
         actions={
-          <>
+          <div className="flex gap-3">
             <Button asChild variant="outline" className="rounded-full">
-              <Link to="/admin/blog">Back to blog</Link>
+              <Link to="/admin/blog">
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Link>
             </Button>
-            <StatusBadge status={status} />
-          </>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => handleSave(false)}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Save Draft
+            </Button>
+            <Button
+              className="rounded-full bg-primary hover:bg-primary/90"
+              onClick={() => handleSave(true)}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Publish
+            </Button>
+          </div>
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-6">
-          <Card className="border-border/80 shadow-sm">
-            <CardHeader>
-              <CardTitle>Post details</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Title</label>
-                <Input value={post.title} onChange={(event) => setPost({ ...post, title: event.target.value })} className={inputClassName} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Slug</label>
-                <Input value={post.slug} onChange={(event) => setPost({ ...post, slug: event.target.value })} className={inputClassName} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Excerpt</label>
-                <textarea
-                  value={post.excerpt}
-                  onChange={(event) => setPost({ ...post, excerpt: event.target.value })}
-                  className="min-h-[120px] rounded-3xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-mwezi-primary/40 focus-visible:ring-2 focus-visible:ring-mwezi-primary/15"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Content</label>
-                <textarea
-                  value={post.content}
-                  onChange={(event) => setPost({ ...post, content: event.target.value })}
-                  className="min-h-[280px] rounded-3xl border border-border bg-background px-4 py-3 text-sm leading-7 text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-mwezi-primary/40 focus-visible:ring-2 focus-visible:ring-mwezi-primary/15"
-                />
-              </div>
-            </CardContent>
-          </Card>
+      {error && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="p-4">
+            <p className="text-sm text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
-          <Card className="border-border/80 shadow-sm">
-            <CardHeader className="flex-row items-center justify-between">
-              <CardTitle>SEO settings</CardTitle>
-              <Sparkles className="h-5 w-5 text-mwezi-primary" />
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">SEO title</label>
-                <Input value={post.seoTitle} onChange={(event) => setPost({ ...post, seoTitle: event.target.value })} className={inputClassName} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">SEO description</label>
-                <textarea
-                  value={post.seoDescription}
-                  onChange={(event) => setPost({ ...post, seoDescription: event.target.value })}
-                  className="min-h-[110px] rounded-3xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-mwezi-primary/40 focus-visible:ring-2 focus-visible:ring-mwezi-primary/15"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card className="border-border/80 shadow-sm">
-            <CardHeader>
-              <CardTitle>Publishing</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Category</label>
-                <select
-                  value={post.category}
-                  onChange={(event) => setPost({ ...post, category: event.target.value })}
-                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm text-foreground outline-none focus-visible:border-mwezi-primary/40 focus-visible:ring-2 focus-visible:ring-mwezi-primary/15"
-                >
-                  {['Education', 'Lifestyle', 'Product', 'Care'].map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Tags</label>
-                <Input
-                  value={tagInput}
-                  onChange={(event) => {
-                    const nextTags = event.target.value;
-                    setTagInput(nextTags);
-                    setPost((current) => ({
-                      ...current,
-                      tags: nextTags.split(',').map((tag) => tag.trim()).filter(Boolean),
-                    }));
-                  }}
-                  placeholder="Menstrual Cup, Comfort, Wellness"
-                  className={inputClassName}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Status</label>
-                <select
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value as BlogPostStatus)}
-                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm text-foreground outline-none focus-visible:border-mwezi-primary/40 focus-visible:ring-2 focus-visible:ring-mwezi-primary/15"
-                >
-                  {['Published', 'Draft', 'Archived'].map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="rounded-3xl border border-dashed border-border/80 bg-mwezi-cream p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Featured image</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{post.featuredImage || 'Upload a lead image for the post.'}</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="rounded-full">
-                    <ImageUp className="h-4 w-4" />
-                    Upload
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/80 shadow-sm">
-            <CardHeader>
-              <CardTitle>Preview summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-3xl bg-mwezi-cream p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-mwezi-deep">Slug</p>
-                <p className="mt-2 text-sm text-foreground">{post.slug || 'auto-generated-slug'}</p>
-              </div>
-              <div className="rounded-3xl bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Tags</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(tagInput
-                    .split(',')
-                    .map((tag) => tag.trim())
-                    .filter(Boolean) || []).map((tag) => (
-                    <span key={tag} className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <p className="text-sm leading-6 text-muted-foreground">
-                This preview keeps the editor lightweight while still representing the publishing workflow clearly.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Edit/Preview Toggle */}
+      <div className="flex gap-2">
+        <Button
+          variant={viewMode === 'edit' ? 'default' : 'outline'}
+          className="rounded-full"
+          onClick={() => setViewMode('edit')}
+        >
+          <FileText className="h-4 w-4" />
+          Edit
+        </Button>
+        <Button
+          variant={viewMode === 'preview' ? 'default' : 'outline'}
+          className="rounded-full"
+          onClick={() => setViewMode('preview')}
+        >
+          <Eye className="h-4 w-4" />
+          Preview
+        </Button>
       </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-border/70 pt-6 sm:flex-row sm:justify-end">
-        <Button variant="outline" className="rounded-full" onClick={() => handleSave('Draft')}>
-          <Save className="h-4 w-4" />
-          Save draft
-        </Button>
-        <Button className="rounded-full bg-mwezi-primary hover:bg-mwezi-deep" onClick={() => handleSave('Published')}>
-          <Send className="h-4 w-4" />
-          Publish post
-        </Button>
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+        {/* Main Content Area */}
+        <div className="space-y-6">
+          {viewMode === 'edit' ? (
+            <>
+              <Card className="border-border/80 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Post Content</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Title *</label>
+                    <Input
+                      value={formData.title}
+                      onChange={(e) => handleTitleChange(e.target.value)}
+                      placeholder="Enter post title..."
+                      className={inputClassName}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Slug</label>
+                    <Input
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      placeholder="auto-generated-from-title"
+                      className={inputClassName}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      URL: /blog/{formData.slug || 'post-slug'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Excerpt *</label>
+                    <textarea
+                      value={formData.excerpt}
+                      onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                      placeholder="Brief description of the post..."
+                      className="min-h-[100px] w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/15"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Content *</label>
+                    <div className="rounded-2xl border border-border bg-background overflow-hidden">
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.content}
+                        onChange={(value) => setFormData({ ...formData, content: value })}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        placeholder="Write your post content here..."
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/80 shadow-sm">
+                <CardHeader>
+                  <CardTitle>SEO Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">SEO Title</label>
+                    <Input
+                      value={formData.seo_title}
+                      onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
+                      placeholder={formData.title || 'Will use post title'}
+                      className={inputClassName}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">SEO Description</label>
+                    <textarea
+                      value={formData.seo_description}
+                      onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
+                      placeholder={formData.excerpt || 'Will use post excerpt'}
+                      className="min-h-[80px] w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/15"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <Card className="border-border/80 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-2xl">{formData.title || 'Untitled Post'}</CardTitle>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>{formData.author_name}</span>
+                  <span>•</span>
+                  <span>{new Date().toLocaleDateString()}</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="prose prose-sm max-w-none dark:prose-invert"
+                  dangerouslySetInnerHTML={{
+                    __html: formData.content || '<p class="text-muted-foreground">No content yet...</p>',
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Sidebar - Post Settings */}
+        <div className="space-y-6">
+          <Card className="border-border/80 shadow-sm">
+            <CardHeader>
+              <CardTitle>Post Settings</CardTitle>
+              <p className="text-sm text-muted-foreground">Manage post metadata and settings</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  Author
+                </label>
+                <Input
+                  value={formData.author_name}
+                  onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
+                  placeholder="Author name"
+                  className="h-10 rounded-xl border-border bg-muted/30 dark:bg-muted/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-border bg-muted/30 dark:bg-muted/20 px-3 text-sm text-foreground outline-none focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/15"
+                >
+                  {['Education', 'Lifestyle', 'Product', 'Care'].map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  Tags
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
+                    placeholder="Add a tag..."
+                    className="h-10 flex-1 rounded-xl border-border bg-muted/30 dark:bg-muted/20"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddTag} className="rounded-xl">
+                    Add
+                  </Button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 rounded-full bg-secondary dark:bg-secondary/60 px-3 py-1 text-xs font-medium text-secondary-foreground"
+                      >
+                        {tag}
+                        <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-destructive">
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                  Featured Image *
+                </label>
+                <FileUpload
+                  bucket="media"
+                  folder="blog"
+                  currentUrl={formData.featured_image_url}
+                  onUploadComplete={(result: UploadResult) => {
+                    setFormData({ ...formData, featured_image_url: result.url });
+                  }}
+                  onUploadError={(error: string) => {
+                    console.error('Upload error:', error);
+                    setError(error);
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Status</label>
+                <div className="rounded-xl bg-muted/30 dark:bg-muted/20 p-3">
+                  <StatusBadge status={formData.status === 'draft' ? 'Draft' : formData.status === 'published' ? 'Published' : 'Archived'} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -64,7 +64,7 @@ export default function NewsletterSubscribers() {
       <Card className="border-border/80 shadow-sm">
         <CardContent className="overflow-x-auto p-0">
           <table className="min-w-full divide-y divide-border/70">
-            <thead className="bg-mwezi-cream/70 text-left text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <thead className="bg-muted/30 dark:bg-muted/20 text-left text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               <tr>
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Email</th>
@@ -73,9 +73,9 @@ export default function NewsletterSubscribers() {
                 <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/70 bg-white">
+            <tbody className="divide-y divide-border/70 bg-card dark:bg-card/50">
               {filteredSubscribers.map((subscriber) => (
-                <tr key={subscriber.id}>
+                <tr key={subscriber.id} className="hover:bg-muted/20 dark:hover:bg-muted/10 transition-colors">
                   <td className="px-6 py-5 font-medium text-foreground">{subscriber.name}</td>
                   <td className="px-6 py-5 text-sm text-foreground">{subscriber.email}</td>
                   <td className="px-6 py-5 text-sm text-muted-foreground">{subscriber.subscriptionDate}</td>
@@ -86,7 +86,7 @@ export default function NewsletterSubscribers() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="rounded-full text-rose-700 hover:bg-rose-50 hover:text-rose-700"
+                      className="rounded-full text-rose-700 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30 dark:hover:text-rose-300"
                       onClick={() => setDeleteTarget(subscriber)}
                     >
                       <Trash2 className="h-4 w-4" />
