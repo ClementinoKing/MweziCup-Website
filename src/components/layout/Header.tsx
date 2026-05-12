@@ -50,7 +50,7 @@ export default function Header() {
           </NavigationMenu>
 
           <div className="flex items-center gap-2">
-            <Button asChild variant="secondary" className="hidden rounded-full bg-secondary px-5 text-sm text-secondary-foreground shadow-none hover:bg-mwezi-rose md:inline-flex">
+            <Button asChild variant="default" className="hidden rounded-full px-5 text-sm md:inline-flex">
               <Link to="/product">Shop Now</Link>
             </Button>
             <Button variant="ghost" size="icon" className="rounded-full border border-border bg-background hover:bg-secondary/70" aria-label="View cart">
@@ -86,7 +86,7 @@ export default function Header() {
                   ))}
                 </nav>
                 <div className="mt-6 flex flex-col gap-3">
-                  <Button asChild className="rounded-full">
+                  <Button asChild variant="default" className="rounded-full">
                     <Link to="/product">Shop Now</Link>
                   </Button>
                   <Button asChild variant="outline" className="rounded-full">

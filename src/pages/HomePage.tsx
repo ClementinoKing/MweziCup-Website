@@ -1,8 +1,6 @@
 import HeroSection from '@/components/home/HeroSection';
-import LifestyleStrip from '@/components/home/LifestyleStrip';
+import MarqueeBanner from '@/components/layout/MarqueeBanner';
 import WhyMweziCupSection from '@/components/home/WhyMweziCupSection';
-import ProductFeatureSection from '@/components/home/ProductFeatureSection';
-import EducationSupportSection from '@/components/home/EducationSupportSection';
 import BlogPreviewSection from '@/components/home/BlogPreviewSection';
 import FAQPreviewSection from '@/components/home/FAQPreviewSection';
 import FinalCTASection from '@/components/home/FinalCTASection';
@@ -11,10 +9,8 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <LifestyleStrip />
+      <MarqueeBanner />
       <WhyMweziCupSection />
-      <ProductFeatureSection />
-      <EducationSupportSection />
       <BlogPreviewSection />
       <FAQPreviewSection />
       <FinalCTASection />

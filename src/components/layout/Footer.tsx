@@ -77,7 +77,12 @@ export default function Footer() {
             <form className="space-y-3">
               <label className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Stay in touch</label>
               <div className="flex gap-2">
-                <Input type="email" placeholder="Write Email" aria-label="Email address" className="flex-1" />
+                <Input
+                  type="email"
+                  placeholder="Write Email"
+                  aria-label="Email address"
+                  className="flex-1 border-white/10 bg-white/5 text-white placeholder:text-white/45 focus-visible:border-white/25 focus-visible:ring-white/20"
+                />
                 <Button type="submit" size="icon" className="h-11 w-11 rounded-full bg-primary hover:bg-mwezi-deep">
                   <ArrowRight className="h-4 w-4" />
                 </Button>
