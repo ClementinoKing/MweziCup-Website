@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast';
+import Seo from '@/components/seo/Seo';
 import { useAdminAuth } from '../auth/AdminAuthProvider';
 
 type LoginLocationState = {
@@ -58,6 +59,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo title="Admin sign in" description="Sign in to the Mwezi Cup admin dashboard." path="/admin/login" noIndex />
       <div className="grid min-h-screen lg:grid-cols-[0.92fr_1.08fr]">
         <div className="flex items-center justify-center px-6 py-10">
           <div className="w-full max-w-md">

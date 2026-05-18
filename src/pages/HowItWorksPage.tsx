@@ -1,5 +1,6 @@
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Seo from '@/components/seo/Seo';
 
 const steps = [
   'Fold the cup into a comfortable shape.',
@@ -11,6 +12,12 @@ const steps = [
 export default function HowItWorksPage() {
   return (
     <section className="section-gap">
+      <Seo
+        title="How it works"
+        description="See how to fold, insert, wear, remove, and care for your Mwezi Cup with confidence."
+        path="/how-it-works"
+        keywords={['how menstrual cup works', 'how to use menstrual cup', 'cup care']}
+      />
       <div className="page-shell space-y-10">
         <PageHeader
           eyebrow="How it works"

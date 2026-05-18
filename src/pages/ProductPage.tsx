@@ -1,12 +1,31 @@
 import PageHeader from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Seo from '@/components/seo/Seo';
 
 const bullets = ['Medical-grade silicone', 'Reusable for years', 'Body-safe comfort', 'Designed for real life'];
 
 export default function ProductPage() {
   return (
     <section className="section-gap">
+      <Seo
+        title="Product"
+        description="Explore the Mwezi Cup product story, designed with medical-grade silicone and all-day comfort in mind."
+        path="/product"
+        type="product"
+        keywords={['Mwezi Cup product', 'medical-grade silicone cup', 'reusable menstrual cup']}
+        schema={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: 'Mwezi Cup',
+          description: 'A premium reusable menstrual cup designed for comfort, sustainability, and everyday use.',
+          brand: {
+            '@type': 'Brand',
+            name: 'Mwezi Cup',
+          },
+          image: 'https://mwezicup.com/img/Mwezi%20hero%20image.png',
+        }}
+      />
       <div className="page-shell space-y-10">
         <PageHeader
           eyebrow="Product"

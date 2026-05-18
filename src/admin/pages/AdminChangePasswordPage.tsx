@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast';
+import Seo from '@/components/seo/Seo';
 import { supabase } from '@/lib/supabase';
 import { useAdminAuth } from '../auth/AdminAuthProvider';
 import { completeAdminInvite } from '../services/adminUsersService';
@@ -67,6 +68,7 @@ export default function AdminChangePasswordPage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(220,30,61,0.08),_transparent_32%),linear-gradient(180deg,#fff8fa_0%,#fff_100%)] px-4 py-10 sm:px-6 lg:px-8">
+      <Seo title="Set new password" description="Set your Mwezi Cup admin password." path="/admin/change-password" noIndex />
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-md items-center justify-center">
         <Card className="w-full border-[#f1c4cf] bg-white/90 shadow-2xl shadow-[#f3c4cf]/20 backdrop-blur">
           <CardHeader className="space-y-5 pb-2 text-center">

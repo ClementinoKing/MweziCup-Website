@@ -1,6 +1,7 @@
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import Seo from '@/components/seo/Seo';
 
 const faqs = [
   { question: 'How long can I wear mweziCup?', answer: 'Up to 12 hours depending on your flow and comfort.' },
@@ -13,6 +14,12 @@ const faqs = [
 export default function FAQsPage() {
   return (
     <section className="section-gap">
+      <Seo
+        title="FAQs"
+        description="Get answers about Mwezi Cup comfort, safety, wear time, cleaning, and reuse."
+        path="/faqs"
+        keywords={['Mwezi Cup FAQs', 'menstrual cup safety', 'how long to wear menstrual cup']}
+      />
       <div className="page-shell space-y-10">
         <PageHeader
           eyebrow="FAQs"

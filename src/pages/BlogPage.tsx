@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import BlogCard from '@/components/blog/BlogCard';
 import { getPublishedBlogPosts } from '@/services/blogService';
 import type { BlogPostWithTags } from '@/types/database';
+import Seo from '@/components/seo/Seo';
 
 const categories = ['All Categories', 'Education', 'Lifestyle', 'Product', 'Care'];
 
@@ -50,6 +51,12 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title="Blog"
+        description="Read practical guides, education, and stories about reusable period care from Mwezi Cup."
+        path="/blog"
+        keywords={['menstrual cup blog', 'period care education', 'reusable period care']}
+      />
       {/* Hero Section - Smaller */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-12 sm:py-16 lg:py-20">
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />

@@ -1,9 +1,16 @@
 import PageHeader from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Seo from '@/components/seo/Seo';
 
 export default function AboutPage() {
   return (
     <section className="section-gap">
+      <Seo
+        title="About us"
+        description="Learn how Mwezi Cup is positioning reusable menstrual care around comfort, confidence, and everyday use."
+        path="/about"
+        keywords={['about mwezi cup', 'reusable menstrual cup', 'sustainable period care']}
+      />
       <div className="page-shell space-y-10">
         <PageHeader
           eyebrow="About mweziCup"

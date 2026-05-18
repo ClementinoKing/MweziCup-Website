@@ -5,6 +5,7 @@ import AdminHeader from './AdminHeader';
 import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '../auth/AdminAuthProvider';
+import Seo from '@/components/seo/Seo';
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -38,6 +39,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo title="Admin" description="Mwezi Cup admin dashboard." path="/admin" noIndex />
       <AdminHeader
         searchValue={searchValue}
         onSearchChange={setSearchValue}
